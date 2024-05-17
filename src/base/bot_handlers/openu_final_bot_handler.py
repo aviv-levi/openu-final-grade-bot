@@ -7,6 +7,7 @@ from telegram.ext import (
     filters, CommandHandler,
 )
 from src.base.models.openu_task_details import OpenUTaskDetails
+from src.base.calculators.openu_calculator import OpenUCalculator
 
 CHOOSE_MENU, TASKS_COUNT, TASK_WEIGHT, TASK_GRADE, EXAM_GRADE, DESIRED_FINAL = range(6)
 ONLY_TEXT_FILTER = filters.TEXT & ~filters.COMMAND
@@ -87,6 +88,9 @@ class OpenUFinalBotHandler(TelegramBasicHandler):
             if selected_option == MENU[0]:
                 await update.message.reply_text('הכניסו בבקשה את ציון הבחינה')
                 return EXAM_GRADE
+            if selected_option == MENU[1]:
+                await update.message.reply_text('הכניסו בבקשה את ציון סופי הרצוי')
+                return DESIRED_FINAL
             else:
                 return ConversationHandler.END
 
@@ -95,8 +99,14 @@ class OpenUFinalBotHandler(TelegramBasicHandler):
             Stores the exam grade and show user the final course grade.
         """
         exam_grade = int(update.message.text)
+        if exam_grade < 60:
+            await update.message.reply_text(f'הציון הסופי שלך בקורס הוא: {exam_grade}')
+            return ConversationHandler.END
+
         tasks_details = context.user_data['tasks_details']
-        await update.message.reply_text(f'הציון הסופי שלך בקורס הוא: {exam_grade}')
+        final_grade = OpenUCalculator.calculate_final_grade(tasks_details, exam_grade)
+
+        await update.message.reply_text(f'הציון הסופי שלך בקורס הוא: {final_grade}')
         return ConversationHandler.END
 
     async def _desire_grade_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -104,8 +114,13 @@ class OpenUFinalBotHandler(TelegramBasicHandler):
             Stores the desire final grade and show user the minimum exam grade.
         """
         desire_grade = int(update.message.text)
+        if desire_grade < 60:
+            await update.message.reply_text(f'הציון המינימלי לבחינה הוא: {desire_grade}')
+            return ConversationHandler.END
         tasks_details = context.user_data['tasks_details']
-        await update.message.reply_text(f'הציון המינימלי לבחינה הוא: {desire_grade}')
+        min_exam_grade = OpenUCalculator.calculate_desired_exam_grade(tasks_details, desire_grade)
+
+        await update.message.reply_text(f'הציון המינימלי לבחינה הוא: {min_exam_grade}')
         return ConversationHandler.END
 
     async def _cancel_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
