@@ -1,3 +1,4 @@
+import math
 from typing import List
 
 from src.base.models.openu_task_details import OpenUTaskDetails
@@ -8,7 +9,10 @@ TOTAL_WEIGHT = 14
 class OpenUCalculator:
 
     @staticmethod
-    def calculate_final_grade(tasks_details: List[OpenUTaskDetails], exam_grade):
+    def calculate_final_grade(tasks_details: List[OpenUTaskDetails], exam_grade) -> int:
+        if not len(tasks_details):
+            return exam_grade
+
         sorted_tasks = sorted(
             tasks_details,
             key=lambda item: item.task_grade,
@@ -25,8 +29,9 @@ class OpenUCalculator:
         exam_weight = 100 - tasks_total_weight
         exam_details = OpenUTaskDetails(exam_weight, exam_grade)
         calculation_tasks.append(exam_details)
-        return sum(calculation_task.task_grade * calculation_task.task_weight
-                   for calculation_task in calculation_tasks) / 100
+        final_grade = sum(calculation_task.task_grade * calculation_task.task_weight
+                          for calculation_task in calculation_tasks) / 100
+        return OpenUCalculator.round_grade(final_grade)
 
     @staticmethod
     def _find_closest_exam_grade(exam_to_final_map, desired_final_grade):
@@ -37,3 +42,7 @@ class OpenUCalculator:
         exam_to_final_map = {exam_grade: OpenUCalculator.calculate_final_grade(tasks_details, exam_grade)
                              for exam_grade in range(60, 101)}
         return OpenUCalculator._find_closest_exam_grade(exam_to_final_map, desire_grade)
+
+    @staticmethod
+    def round_grade(grade):
+        return math.floor(grade + 0.5) if grade >= 0 else math.ceil(grade - 0.5)
