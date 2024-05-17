@@ -1,4 +1,4 @@
-from base.telegram_basic_handler import TelegramBasicHandler
+from src.base.bot_handlers.telegram_basic_handler import TelegramBasicHandler
 from telegram import ReplyKeyboardMarkup, Update, ReplyKeyboardRemove
 from telegram.ext import (
     ContextTypes,
@@ -6,7 +6,7 @@ from telegram.ext import (
     MessageHandler,
     filters, CommandHandler,
 )
-from base.openu_task_details import OpenUTaskDetails
+from src.base.models.openu_task_details import OpenUTaskDetails
 
 CHOOSE_MENU, TASKS_COUNT, TASK_WEIGHT, TASK_GRADE, EXAM_GRADE, DESIRED_FINAL = range(6)
 ONLY_TEXT_FILTER = filters.TEXT & ~filters.COMMAND

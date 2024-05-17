@@ -1,4 +1,4 @@
-from core.bot_handler import BotHandler
+from src.core.bot_handler import BotHandler
 from telegram.ext import Application
 from telegram import Update
 
