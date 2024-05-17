@@ -27,3 +27,13 @@ class OpenUCalculator:
         calculation_tasks.append(exam_details)
         return sum(calculation_task.task_grade * calculation_task.task_weight
                    for calculation_task in calculation_tasks) / 100
+
+    @staticmethod
+    def _find_closest_exam_grade(exam_to_final_map, desired_final_grade):
+        return min(exam_to_final_map, key=lambda exam_grade: abs(exam_to_final_map[exam_grade] - desired_final_grade))
+
+    @staticmethod
+    def calculate_desired_exam_grade(tasks_details: List[OpenUTaskDetails], desire_grade):
+        exam_to_final_map = {exam_grade: OpenUCalculator.calculate_final_grade(tasks_details, exam_grade)
+                             for exam_grade in range(60, 101)}
+        return OpenUCalculator._find_closest_exam_grade(exam_to_final_map, desire_grade)
