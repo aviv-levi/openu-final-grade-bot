@@ -8,6 +8,10 @@ from telegram.ext import (
 )
 from src.base.models.openu_task_details import OpenUTaskDetails
 from src.base.calculators.openu_calculator import OpenUCalculator
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 CHOOSE_MENU, TASKS_COUNT, TASK_WEIGHT, TASK_GRADE, EXAM_GRADE, DESIRED_FINAL = range(6)
 ONLY_TEXT_FILTER = filters.TEXT & ~filters.COMMAND
@@ -23,6 +27,9 @@ class OpenUFinalBotHandler(TelegramBasicHandler):
         """
             Starts the conversation and show user the menu.
         """
+
+        user = update.message.from_user
+        logger.info(f"Starting conversion with {user}")
 
         welcome_message = "ברוכים הבאים למחשבון ציון סופי בפתוחה!\n" \
                           "מה תרצו לעשות?"
@@ -56,6 +63,7 @@ class OpenUFinalBotHandler(TelegramBasicHandler):
             return TASK_GRADE
         else:
             await update.message.reply_text('נראה כי אין לך מטלות בקורס.')
+            logger.info(f"Ending conversion with {update.message.from_user}")
             return ConversationHandler.END
 
     async def _task_grade_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -92,6 +100,7 @@ class OpenUFinalBotHandler(TelegramBasicHandler):
                 await update.message.reply_text('הכניסו בבקשה את ציון סופי הרצוי')
                 return DESIRED_FINAL
             else:
+                logger.info(f"Ending conversion with {update.message.from_user}")
                 return ConversationHandler.END
 
     async def _exam_grade_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -101,12 +110,14 @@ class OpenUFinalBotHandler(TelegramBasicHandler):
         exam_grade = int(update.message.text)
         if exam_grade < 60:
             await update.message.reply_text(f'הציון הסופי שלך בקורס הוא: {exam_grade}')
+            logger.info(f"Ending conversion with {update.message.from_user}")
             return ConversationHandler.END
 
         tasks_details = context.user_data['tasks_details']
         final_grade = OpenUCalculator.calculate_final_grade(tasks_details, exam_grade)
 
         await update.message.reply_text(f'הציון הסופי שלך בקורס הוא: {final_grade}')
+        logger.info(f"Ending conversion with {update.message.from_user}")
         return ConversationHandler.END
 
     async def _desire_grade_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -116,11 +127,15 @@ class OpenUFinalBotHandler(TelegramBasicHandler):
         desire_grade = int(update.message.text)
         if desire_grade < 60:
             await update.message.reply_text(f'הציון המינימלי לבחינה הוא: {desire_grade}')
+            logger.info(f"Ending conversion with {update.message.from_user}")
             return ConversationHandler.END
         tasks_details = context.user_data['tasks_details']
         min_exam_grade = OpenUCalculator.calculate_desired_exam_grade(tasks_details, desire_grade)
 
         await update.message.reply_text(f'הציון המינימלי לבחינה הוא: {min_exam_grade}')
+
+        user = update.message.from_user
+        logger.info(f"Ending conversion with {user}")
         return ConversationHandler.END
 
     async def _cancel_callback(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -129,9 +144,11 @@ class OpenUFinalBotHandler(TelegramBasicHandler):
         """
         await update.message.reply_text("המשך יום טוב (:", reply_markup=ReplyKeyboardRemove())
 
+        logger.info(f"Ending conversion with {update.message.from_user}")
         return ConversationHandler.END
 
     def _build_conversion(self):
+        logger.info("Start building conversion")
         welcome_point = MessageHandler(ONLY_TEXT_FILTER, self._welcome_callback)
         choose_menu_point = MessageHandler(filters.Regex(f"^({'|'.join(MENU)})$"), self._choose_menu_callback)
         tasks_count_point = MessageHandler(ONLY_TEXT_FILTER, self._tasks_count_callback)
